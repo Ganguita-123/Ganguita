@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Ganguita 🎰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #080c0a;
+    --surface:  #0e1512;
+    --surface2: #162019;
+    --border:   #1e3028;
+    --green:    #00e676;
+    --green2:   #00c853;
+    --gold:     #ffd740;
+    --red:      #ff5252;
+    --text:     #f0f7f2;
+    --text2:    #8eb89e;
+    --muted:    #4a7060;
+
+    --s1: #ffd740;
+    --s2: #40c4ff;
+    --s3: #ff6d9d;
+    --s4: #69f0ae;
+    --s5: #ff9100;
+    --s6: #ea80fc;
+    --s7: #84ffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,230,118,0.08) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── HEADER ────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(8,12,10,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 58px;
+  }
+
+  .logo {
+    font-family: 'Oswald', condensed;
+    font-size: 1.7rem; font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase;
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(0,230,118,0.5);
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--green);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 20px; padding: 4px 12px;
+    background: rgba(0,230,118,0.06);
+  }
+
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(0,230,118,0.4); }
+    50% { opacity:0.7; box-shadow: 0 0 0 5px rgba(0,230,118,0); }
+  }
+
+  /* ── MAIN LAYOUT ────────────────────────────────── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1100px; margin: 0 auto;
+    padding: 24px 16px 60px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto;
+    gap: 20px;
+  }
+
+  /* ── SECTION TITLES ─────────────────────────────── */
+  .section-title {
+    font-family: 'Oswald', condensed;
+    font-size: 1rem; font-weight: 600;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+  }
+
+  /* ── RANKING ────────────────────────────────────── */
+  .ranking-section { grid-column: 1; grid-row: 1; }
+
+  .rank-list { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── BUSCADOR ───────────────────────────────────── */
+  .search-wrap {
+    position: relative; margin-bottom: 14px;
+  }
+
+  .search-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem; pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .search-inp {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 36px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .search-inp:focus { border-color: var(--green); }
+  .search-inp::placeholder { color: var(--muted); }
+
+  .search-count {
+    font-size: 0.75rem; color: var(--muted);
+    margin-bottom: 10px; padding-left: 2px;
+  }
+
+  .rank-card.hidden { display: none; }
+
+  .rank-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative; overflow: hidden;
+  }
+
+  .rank-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,230,118,0.04), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .rank-card:hover::before { opacity: 1; }
+  .rank-card:hover { border-color: rgba(0,230,118,0.25); transform: translateX(2px); }
+
+  .rank-card.gold   { border-color: rgba(255,215,64,0.35); background: linear-gradient(135deg, rgba(255,215,64,0.06), var(--surface)); }
+  .rank-card.silver { border-color: rgba(200,200,200,0.2); }
+  .rank-card.bronze { border-color: rgba(180,100,40,0.25); }
+
+  @keyframes glow-gold {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,215,64,0); }
+    50%      { box-shadow: 0 0 20px 4px rgba(255,215,64,0.15); }
+  }
+  .rank-card.gold { animation: glow-gold 3s ease-in-out infinite; }
+
+  .rank-pos {
+    font-family: 'Oswald', condensed;
+    font-size: 2rem; font-weight: 700;
+    text-align: center; line-height: 1;
+    color: var(--muted);
+  }
+  .rank-card.gold   .rank-pos { color: var(--gold); }
+  .rank-card.silver .rank-pos { color: #b0b8b4; }
+  .rank-card.bronze .rank-pos { color: #cd8040; }
+
+  .rank-body { min-width: 0; }
+
+  .rank-name {
+    font-family: 'Oswald', condensed;
+    font-size: 1.15rem; font-weight: 600;
+    letter-spacing: 1px; color: var(--text);
+    margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .rank-chips {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+
+  .chip {
+    font-family: 'Oswald', condensed;
+    font-size: 0.85rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.07);
+    color: #d4ead9;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .chip.hit {
+    border-color: transparent;
+    color: #080c0a;
+    position: relative;
+  }
+
+  /* progress bar bajo los chips */
+  .rank-progress {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+  }
+
+  .prog-track {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: var(--border); overflow: hidden;
+  }
+
+  .prog-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--green);
+    transition: width 0.6s ease;
+  }
+
+  .prog-label {
+    font-family: 'Oswald', condensed;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text2); white-space: nowrap;
+  }
+
+  .rank-score-block { text-align: center; }
+
+  .rank-score-num {
+    font-family: 'Oswald', condensed;
+    font-size: 2.4rem; font-weight: 700;
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .rank-card.gold .rank-score-num { color: var(--gold); }
+
+  .rank-score-denom {
+    font-size: 0.65rem; letter-spacing: 1px;
+    color: var(--muted); text-transform: uppercase;
+  }
+
+  /* ── PANEL DERECHO: NÚMEROS ─────────────────────── */
+  .numeros-section {
+    grid-column: 2; grid-row: 1;
+  }
+
+  .numeros-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky; top: 74px;
+  }
+
+  .panel-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+  }
+
+  .panel-tab {
+    flex: 1; padding: 12px;
+    text-align: center;
+    font-family: 'Oswald', condensed;
+    font-size: 0.82rem; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.15s; border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .panel-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .panel-tab:hover:not(.active) { color: var(--text2); }
+
+  .panel-body { padding: 16px; }
+
+  /* TABLERO 10x10 */
+  .tablero-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+  }
+
+  .t-celda {
+    aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    font-family: 'Oswald', condensed;
+    font-size: 0.72rem; font-weight: 600;
+    color: #a8c8b0;
+    position: relative;
+    transition: all 0.15s;
+  }
+
+  .t-celda.marcada {
+    color: #080c0a;
+    border-color: transparent;
+  }
+
+  .t-celda .t-dots {
+    display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 1px;
+    padding: 1px;
+  }
+
+  .t-dot {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+  }
+
+  /* LISTA POR SORTEO */
+  .sorteo-grupo { margin-bottom: 14px; }
+
+  .sorteo-grupo:last-child { margin-bottom: 0; }
+
+  .sorteo-label {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Oswald', condensed;
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+
+  .sorteo-dot-big {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .sorteo-nums {
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+
+  .sorteo-num-chip {
+    font-family: 'Oswald', condensed;
+    font-size: 1rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 8px;
+    color: #080c0a;
+  }
+
+  /* ── EMPTY STATE ────────────────────────────────── */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--muted); font-size: 0.9rem;
+  }
+  .empty .e-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+
+  /* ── LOADING ────────────────────────────────────── */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px; flex-direction: column; gap: 14px;
+    color: var(--text2);
+  }
+
+  .spinner {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--green);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ─────────────────────────────────── */
+  @media (max-width: 780px) {
+    main {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      padding: 14px 12px 40px;
+    }
+
+    .ranking-section { grid-column: 1; grid-row: 1; }
+    .numeros-section  { grid-column: 1; grid-row: 2; }
+
+    .numeros-panel { position: static; }
+
+    .rank-card { grid-template-columns: 38px 1fr auto; gap: 10px; padding: 12px 14px; }
+    .rank-pos { font-size: 1.5rem; }
+    .rank-score-num { font-size: 1.9rem; }
+    .rank-name { font-size: 1rem; }
+  }
+
+  @media (max-width: 420px) {
+    .logo { font-size: 1.3rem; letter-spacing: 2px; }
+    .chip { font-size: 0.78rem; padding: 1px 5px; }
+    .rank-score-num { font-size: 1.6rem; }
+  }
+
+  /* ── VISTA TOGGLE (mobile) ──────────────────────── */
+  .vista-toggle {
+    display: none; /* JS lo pone flex solo cuando hay datos */
+    background: rgba(8,12,10,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    gap: 6px;
+    position: sticky;
+    top: 58px; /* justo bajo el header */
+    z-index: 40;
+  }
+
+  .vista-btn {
+    flex: 1; padding: 9px;
+    text-align: center;
+    font-family: 'Oswald', condensed;
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); cursor: pointer;
+    border-radius: 8px;
+    border: none; background: transparent;
+    transition: all 0.18s;
+  }
+
+  .vista-btn.active {
+    background: var(--green);
+    color: #080c0a;
+    box-shadow: 0 2px 10px rgba(0,230,118,0.25);
+  }
+
+  /* en desktop: toggle nunca se muestra (los dos paneles lado a lado) */
+  @media (min-width: 781px) {
+    .vista-toggle { display: none !important; }
+    .ranking-section.oculto { display: block !important; }
+    .numeros-section.oculto { display: block !important; }
+  }
+
+  /* en mobile: ocultar sección inactiva */
+  @media (max-width: 780px) {
+    .ranking-section.oculto  { display: none; }
+    .numeros-section.oculto  { display: none; }
+  }
+
+  /* ── NO GAME STATE ──────────────────────────────── */
+  .no-game-banner {
+    grid-column: 1 / -1;
+    text-align: center; padding: 80px 20px;
+  }
+
+  .no-game-banner h2 {
+    font-family: 'Oswald', condensed;
+    font-size: 2rem; color: var(--green);
+    letter-spacing: 3px; margin-bottom: 10px;
+  }
+
+  .no-game-banner p { color: var(--muted); font-size: 0.95rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎰 La Ganguita</div>
+  <div class="live-badge"><div class="live-dot"></div> En vivo</div>
+</header>
+
+<div class="vista-toggle" id="vista-toggle" style="display:none">
+  <button class="vista-btn active" id="btn-vista-ranking" onclick="setVista('ranking')">🏆 Ranking</button>
+  <button class="vista-btn" id="btn-vista-sorteos" onclick="setVista('sorteos')">🎡 Sorteos</button>
+</div>
+<main id="main-content">
+  <div class="loading" style="grid-column:1/-1">
+    <div class="spinner"></div>
+    <span>Conectando...</span>
+  </div>
+</main>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── FIREBASE CONFIG — reemplazá con tus datos ──────
+const firebaseConfig = {
+  apiKey:            "AIzaSyAlbQG_ncFsX9lGO_NHV3qmENEVeNyqH1U",
+  authDomain:        "ganguita-2c221.firebaseapp.com",
+  databaseURL:       "https://ganguita-2c221-default-rtdb.firebaseio.com",
+  projectId:         "ganguita-2c221",
+  storageBucket:     "ganguita-2c221.firebasestorage.app",
+  messagingSenderId: "1016839585089",
+  appId:             "1:1016839585089:web:dc7c6456ea282db93cb5c0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── COLORES DE SORTEO ───────────────────────────────
+const SC = {1:'#ffd740',2:'#40c4ff',3:'#ff6d9d',4:'#69f0ae',5:'#ff9100',6:'#ea80fc',7:'#84ffff'};
+const SN = {1:'1° Sorteo',2:'2° Sorteo',3:'3° Sorteo',4:'4° Sorteo',5:'5° Sorteo',6:'6° Sorteo',7:'7° Sorteo'};
+
+// ── ESTADO LOCAL ────────────────────────────────────
+let jugadores = [];
+let tablero   = {};
+let panelActivo = 'lista'; // 'tablero' | 'lista'
+
+// ── ESCUCHAR FIREBASE EN TIEMPO REAL ───────────────
+onValue(ref(db, 'ganguita'), snap => {
+  const data = snap.val() || {};
+  jugadores = data.jugadores ? Object.values(data.jugadores) : [];
+  tablero   = data.tablero   || {};
+  render();
+});
+
+// ── RENDER PRINCIPAL ───────────────────────────────
+function render() {
+  const main = document.getElementById('main-content');
+
+  if (jugadores.length === 0 && Object.keys(tablero).length === 0) {
+    main.innerHTML = `
+      <div class="no-game-banner">
+        <h2>¡El juego no empezó todavía!</h2>
+        <p>El administrador está configurando la partida. Volvé en un momento.</p>
+      </div>`;
+    return;
+  }
+
+  main.innerHTML = `
+    <section class="ranking-section" id="seccion-ranking">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-inp" id="buscador"
+          placeholder="Buscar jugador..."
+          oninput="filtrarRanking(this.value)">
+      </div>
+      <div class="search-count" id="search-count"></div>
+      <div class="rank-list" id="rank-list"></div>
+    </section>
+    <aside class="numeros-section" id="seccion-sorteos">
+      <div class="numeros-panel">
+        <div class="panel-tabs">
+          <div class="panel-tab ${panelActivo==='lista'?'active':''}" onclick="setPanelTab('lista')">📋 Por sorteo</div>
+          <div class="panel-tab ${panelActivo==='tablero'?'active':''}" onclick="setPanelTab('tablero')">🔢 Tablero</div>
+        </div>
+        <div class="panel-body" id="panel-body"></div>
+      </div>
+    </aside>`;
+
+  // mostrar toggle ahora que hay contenido
+  const tog = document.getElementById('vista-toggle');
+  if (tog) tog.style.display = 'flex';
+  // restaurar vista activa
+  setVista(vistaActiva);
+
+  renderRanking();
+  renderPanel();
+}
+
+// ── RANKING ────────────────────────────────────────
+function calcularScore(j) {
+  const conteo = {};
+  j.numeros.forEach(n => { conteo[n] = (conteo[n]||0)+1; });
+  let s = 0;
+  for (const [num, v] of Object.entries(conteo))
+    s += Math.min(v, (tablero[num]||[]).length);
+  return s;
+}
+
+function buildChips(j) {
+  const chipsHtml = [];
+  const visitado = {};
+  j.numeros.forEach(n => {
+    visitado[n] = (visitado[n]||0);
+    const marcasTablero = (tablero[n]||[]).length;
+    const esteSlot = visitado[n];
+    visitado[n]++;
+    const iluminado = esteSlot < marcasTablero;
+    if (iluminado) {
+      const color = SC[(tablero[n]||[{}])[esteSlot]?.sorteo] || '#69f0ae';
+      chipsHtml.push(`<span class="chip hit" style="background:${color}">${n}</span>`);
+    } else {
+      chipsHtml.push(`<span class="chip">${n}</span>`);
+    }
+  });
+  return chipsHtml.join('');
+}
+
+function renderRanking() {
+  const cont = document.getElementById('rank-list');
+  if (!cont) return;
+  const busqActual = document.getElementById('buscador')?.value || '';
+
+  if (jugadores.length === 0) {
+    cont.innerHTML = `<div class="empty"><div class="e-icon">🎯</div><p>Sin jugadores aún</p></div>`;
+    return;
+  }
+
+  // Ordenar por score desc
+  const scored = jugadores
+    .map(j => ({ ...j, score: calcularScore(j) }))
+    .sort((a,b) => b.score - a.score);
+
+  // Asignar posición compartida (dense ranking)
+  // Ej: scores 7,7,5,5,3 → posiciones 1,1,2,2,3
+  let posActual = 1;
+  scored.forEach((j, idx) => {
+    if (idx === 0) {
+      j.rankPos = 1;
+    } else if (j.score === scored[idx-1].score) {
+      j.rankPos = scored[idx-1].rankPos; // mismo puesto
+    } else {
+      j.rankPos = idx + 1; // posición real (no densa)
+      posActual = j.rankPos;
+    }
+  });
+
+  const HTML_POS = {
+    1: '🥇', 2: '🥈', 3: '🥉'
+  };
+
+  const totalLineas = scored.length;
+
+  cont.innerHTML = scored.map(j => {
+    const rp  = j.rankPos;
+    const cls = rp===1?'gold': rp===2?'silver': rp===3?'bronze': '';
+    const em  = HTML_POS[rp] || rp;
+    const pct = (j.score / 10) * 100;
+    const chips = buildChips(j);
+    const scoreColor = j.score===10?'var(--gold)':j.score>=7?'var(--green)':j.score>=4?'var(--text)':'var(--muted)';
+
+    return `
+      <div class="rank-card ${cls}">
+        <div class="rank-pos">${em}</div>
+        <div class="rank-body">
+          <div class="rank-name">${esc(j.nombre)}</div>
+          <div class="rank-chips">${chips}</div>
+          <div class="rank-progress">
+            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+            <span class="prog-label">${j.score}/10</span>
+          </div>
+        </div>
+        <div class="rank-score-block">
+          <div class="rank-score-num" style="color:${scoreColor}">${j.score}</div>
+          <div class="rank-score-denom">pts</div>
+        </div>
+      </div>`;
+  }).join('') + `
+    <div style="margin-top:18px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;
+      background:var(--surface);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Oswald',condensed;font-size:0.78rem;letter-spacing:2px;
+        text-transform:uppercase;color:var(--muted);">Total líneas jugando</span>
+      <span style="font-family:'Oswald',condensed;font-size:1.6rem;font-weight:700;
+        color:var(--green);">${totalLineas}</span>
+    </div>`;
+
+  if (busqActual) window.filtrarRanking(busqActual);
+}
+
+// ── PANEL NÚMEROS ──────────────────────────────────
+window.setPanelTab = function(tab) {
+  panelActivo = tab;
+  document.querySelectorAll('.panel-tab').forEach(t =>
+    t.classList.toggle('active', t.textContent.includes(tab==='lista'?'sorteo':'Tablero'))
+  );
+  renderPanel();
+}
+
+function renderPanel() {
+  const cont = document.getElementById('panel-body');
+  if (!cont) return;
+  panelActivo === 'tablero' ? renderTablero(cont) : renderLista(cont);
+}
+
+function renderTablero(cont) {
+  let html = '<div class="tablero-grid">';
+  for (let n = 0; n <= 99; n++) {
+    const key = String(n).padStart(2,'0');
+    const marcas = tablero[key] || [];
+    const marcada = marcas.length > 0;
+    const color = marcada ? SC[marcas[marcas.length-1].sorteo] : '';
+    const dots = marcas.map(m => `<span class="t-dot" style="background:rgba(0,0,0,0.35)"></span>`).join('');
+    html += `<div class="t-celda ${marcada?'marcada':''}" style="${marcada?`background:${color}`:''}">
+      <span>${key}</span>
+      <div class="t-dots">${dots}</div>
+    </div>`;
+  }
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+function renderLista(cont) {
+  let hayAlgo = false;
+  let html = '';
+  for (let s = 1; s <= 7; s++) {
+    const nums = [];
+    for (let n = 0; n <= 99; n++) {
+      const key = String(n).padStart(2,'0');
+      const cnt = (tablero[key]||[]).filter(m => m.sorteo === s).length;
+      for (let i = 0; i < cnt; i++) nums.push(key);
+    }
+    if (nums.length === 0) continue;
+    hayAlgo = true;
+    html += `
+      <div class="sorteo-grupo">
+        <div class="sorteo-label">
+          <span class="sorteo-dot-big" style="background:${SC[s]}"></span>
+          <span style="color:${SC[s]}">${SN[s]}</span>
+          <span style="color:var(--muted);font-size:0.7rem;">(${nums.length} números)</span>
+        </div>
+        <div class="sorteo-nums">
+          ${nums.map(n => `<span class="sorteo-num-chip" style="background:${SC[s]}">${n}</span>`).join('')}
+        </div>
+      </div>`;
+  }
+  cont.innerHTML = hayAlgo ? html : `<div class="empty"><div class="e-icon">🎡</div><p>Todavía no salieron números</p></div>`;
+}
+
+// ── VISTA TOGGLE ───────────────────────────────────
+let vistaActiva = 'ranking';
+
+window.setVista = function(vista) {
+  vistaActiva = vista;
+  const secRanking = document.getElementById('seccion-ranking');
+  const secSorteos = document.getElementById('seccion-sorteos');
+  const btnRanking = document.getElementById('btn-vista-ranking');
+  const btnSorteos = document.getElementById('btn-vista-sorteos');
+  if (!secRanking) return;
+
+  secRanking.classList.toggle('oculto', vista !== 'ranking');
+  secSorteos.classList.toggle('oculto',  vista !== 'sorteos');
+  if (btnRanking) btnRanking.classList.toggle('active', vista === 'ranking');
+  if (btnSorteos) btnSorteos.classList.toggle('active', vista === 'sorteos');
+
+  if (vista === 'sorteos') renderPanel();
+}
+
+// ── BUSCADOR ───────────────────────────────────────
+window.filtrarRanking = function(query) {
+  const q = query.trim().toLowerCase();
+  const cards = document.querySelectorAll('.rank-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const name = card.querySelector('.rank-name')?.textContent.toLowerCase() || '';
+    const match = !q || name.includes(q);
+    card.classList.toggle('hidden', !match);
+    if (match) visible++;
+  });
+  const countEl = document.getElementById('search-count');
+  if (countEl) {
+    countEl.textContent = q
+      ? `${visible} resultado${visible !== 1 ? 's' : ''} para "${query}"`
+      : '';
+  }
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
