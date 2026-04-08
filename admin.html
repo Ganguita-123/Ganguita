@@ -515,6 +515,89 @@
     0%,100% { opacity:1; } 50% { opacity:0.4; }
   }
 
+  /* ── TABLA PAGOS ────────────────────────────────── */
+  .pagos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .pago-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+
+  .pago-card.pagado {
+    border-color: rgba(0,230,118,0.35);
+    background: rgba(0,230,118,0.04);
+  }
+
+  .pago-nombre {
+    font-family: 'Oswald', condensed;
+    font-size: 1rem; font-weight: 600;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  .pago-pos {
+    font-family: 'Oswald', condensed;
+    font-size: 0.8rem; color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* Toggle switch de pago */
+  .pago-toggle {
+    position: relative; width: 44px; height: 24px; flex-shrink: 0;
+  }
+
+  .pago-toggle input { opacity: 0; width: 0; height: 0; }
+
+  .pago-slider {
+    position: absolute; inset: 0; cursor: pointer;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; transition: all 0.2s;
+  }
+
+  .pago-slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    left: 3px; top: 3px;
+    background: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .pago-toggle input:checked + .pago-slider {
+    background: rgba(0,230,118,0.2);
+    border-color: var(--green);
+  }
+
+  .pago-toggle input:checked + .pago-slider::before {
+    transform: translateX(20px);
+    background: var(--green);
+  }
+
+  .pagos-resumen {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 18px; flex-wrap: wrap;
+  }
+
+  .pagos-stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 18px;
+    font-family: 'Oswald', condensed;
+  }
+
+  .pagos-stat-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+  .pagos-stat-label { font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
   /* ── RESPONSIVE ─────────────────────────────────── */
   @media (max-width: 860px) {
     .jugadores-layout { grid-template-columns: 1fr; }
@@ -569,6 +652,7 @@
     <div class="tab active" onclick="cambiarTab('jugadores')">👥 Jugadores</div>
     <div class="tab" onclick="cambiarTab('tablero')">🎡 Tablero</div>
     <div class="tab" onclick="cambiarTab('ranking')">🏆 Ranking</div>
+    <div class="tab" onclick="cambiarTab('pagos')">💰 Pagos</div>
   </div>
 
   <!-- TAB JUGADORES -->
@@ -665,6 +749,33 @@
         <button class="btn btn-outline btn-sm" onclick="renderRanking()">↺ Actualizar</button>
       </div>
       <div id="ranking-cont"></div>
+    </div>
+  </div>
+
+  <!-- TAB PAGOS -->
+  <div id="tab-pagos" class="tab-content">
+    <div style="max-width:1000px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div style="font-family:'Oswald',condensed;font-size:1.8rem;font-weight:700;letter-spacing:3px;color:var(--green);">💰 Control de Pagos</div>
+        <button class="btn btn-outline btn-sm" onclick="marcarTodosPagados()">✔ Marcar todos</button>
+      </div>
+      <div class="pagos-resumen">
+        <div class="pagos-stat">
+          <div class="pagos-stat-num" id="pagos-count" style="color:var(--green)">0</div>
+          <div class="pagos-stat-label">Pagaron</div>
+        </div>
+        <div class="pagos-stat">
+          <div class="pagos-stat-num" id="pagos-falta" style="color:var(--red)">0</div>
+          <div class="pagos-stat-label">Deben</div>
+        </div>
+        <div class="pagos-stat">
+          <div class="pagos-stat-num" id="pagos-total" style="color:var(--text2)">0</div>
+          <div class="pagos-stat-label">Total líneas</div>
+        </div>
+      </div>
+      <div class="pagos-grid" id="pagos-grid">
+        <div style="color:var(--muted);padding:40px;text-align:center;grid-column:1/-1;">Sin jugadores cargados.</div>
+      </div>
     </div>
   </div>
 
@@ -778,6 +889,7 @@ let tablero   = {};
 let sorteoActivo = 1;
 let historial = [];
 let accionModal = null;
+let pagos = {}; // { uid_o_pos: true/false }
 
 const SC = {1:'#ffd740',2:'#40c4ff',3:'#ff6d9d',4:'#69f0ae',5:'#ff9100',6:'#ea80fc',7:'#84ffff'};
 const SN = {1:'1°',2:'2°',3:'3°',4:'4°',5:'5°',6:'6°',7:'7°'};
@@ -790,6 +902,7 @@ function iniciarFirebase() {
     jugadores = data.jugadores ? Object.values(data.jugadores).sort((a,b)=>a.pos-b.pos) : [];
     tablero   = data.tablero   || {};
     sorteoActivo = data.sorteoActivo || 1;
+    pagos     = data.pagos     || {};
     renderJugadores();
     renderGrilla();
     construirSorteosBtns();
@@ -830,12 +943,13 @@ function setSyncStatus(s, label) {
 
 // ── TABS ───────────────────────────────────────────
 window.cambiarTab = function(tab) {
-  const names = ['jugadores','tablero','ranking'];
+  const names = ['jugadores','tablero','ranking','pagos'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===tab));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if (tab==='ranking') renderRanking();
   if (tab==='tablero') renderGrilla();
+  if (tab==='pagos')   renderPagos();
 }
 
 // ── JUGADORES ──────────────────────────────────────
@@ -1267,6 +1381,73 @@ window.guardarEdicion = function() {
   renderJugadores();
   cerrarEditModal();
   toast(`✔ ${nombre} actualizado`);
+}
+
+// ── PAGOS ──────────────────────────────────────────
+function pagoKey(j) { return j.uid || `p${j.pos}`; }
+
+function renderPagos() {
+  const grid = document.getElementById('pagos-grid');
+  const countEl = document.getElementById('pagos-count');
+  const faltaEl = document.getElementById('pagos-falta');
+  const totalEl = document.getElementById('pagos-total');
+  if (!grid) return;
+
+  if (!jugadores.length) {
+    grid.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center;grid-column:1/-1;">Sin jugadores cargados.</div>';
+    if (countEl) countEl.textContent = '0';
+    if (faltaEl) faltaEl.textContent = '0';
+    if (totalEl) totalEl.textContent = '0';
+    return;
+  }
+
+  const sorted = [...jugadores].sort((a,b) => a.pos - b.pos);
+  let pagaron = 0;
+  grid.innerHTML = sorted.map(j => {
+    const key = pagoKey(j);
+    const paid = !!pagos[key];
+    if (paid) pagaron++;
+    return `
+      <div class="pago-card ${paid?'pagado':''}" id="pago-card-${key}">
+        <span class="pago-pos">#${j.pos}</span>
+        <span class="pago-nombre" title="${esc(j.nombre)}">${esc(j.nombre)}</span>
+        <label class="pago-toggle" title="${paid?'Pagó':'No pagó'}">
+          <input type="checkbox" ${paid?'checked':''} onchange="togglePago('${key}', this.checked)">
+          <span class="pago-slider"></span>
+        </label>
+      </div>`;
+  }).join('');
+
+  if (countEl) countEl.textContent = pagaron;
+  if (faltaEl) faltaEl.textContent = sorted.length - pagaron;
+  if (totalEl) totalEl.textContent = sorted.length;
+}
+
+window.togglePago = function(key, paid) {
+  pagos[key] = paid;
+  // actualizar visual de la card sin re-render completo
+  const card = document.getElementById(`pago-card-${key}`);
+  if (card) card.classList.toggle('pagado', paid);
+  // guardar solo el nodo pagos en Firebase
+  set(ref(db, 'ganguita/pagos'), pagos)
+    .then(() => setSyncStatus('ok', 'Guardado ✓'))
+    .catch(() => setSyncStatus('err', 'Error'));
+  // actualizar contadores
+  const countEl = document.getElementById('pagos-count');
+  const faltaEl = document.getElementById('pagos-falta');
+  if (countEl && faltaEl) {
+    const total = jugadores.length;
+    const pagaron = Object.values(pagos).filter(Boolean).length;
+    countEl.textContent = pagaron;
+    faltaEl.textContent = total - pagaron;
+  }
+}
+
+window.marcarTodosPagados = function() {
+  jugadores.forEach(j => { pagos[pagoKey(j)] = true; });
+  set(ref(db, 'ganguita/pagos'), pagos)
+    .then(() => { renderPagos(); toast('✔ Todos marcados como pagados'); })
+    .catch(() => toast('Error al guardar','warn'));
 }
 
 window.toast = function(msg,type='ok') {
