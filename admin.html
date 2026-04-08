@@ -978,9 +978,12 @@ window.agregarJugador = function() {
   // push() genera una key única en Firebase — nunca colisiona aunque
   // dos admins agreguen jugadores al mismo instante
   const nuevoRef = push(ref(db, 'ganguita/jugadores'));
-  const uid = nuevoRef.key; // key única de Firebase (ej: "-NxK2abc...")
+  const uid = nuevoRef.key;
   set(nuevoRef, { pos, nombre, numeros: nums, uid })
     .then(() => {
+      // marcar como pagado por defecto
+      pagos[uid] = true;
+      set(ref(db, 'ganguita/pagos'), pagos);
       toast(`✔ ${nombre} → Pos. ${pos}`);
       setSyncStatus('ok', 'Guardado ✓');
     })
@@ -1405,7 +1408,7 @@ function renderPagos() {
   let pagaron = 0;
   grid.innerHTML = sorted.map(j => {
     const key = pagoKey(j);
-    const paid = !!pagos[key];
+    const paid = key in pagos ? !!pagos[key] : true; // por defecto pagado
     if (paid) pagaron++;
     return `
       <div class="pago-card ${paid?'pagado':''}" id="pago-card-${key}">
